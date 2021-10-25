@@ -13,7 +13,7 @@ def get_message(client):
     :param client:
     :return:
     """
-    client.settimeout(5.0)
+    # client.settimeout(5.0)
     encoded_response = client.recv(MAX_PACKAGE_LENGTH)
     if isinstance(encoded_response, bytes):
         json_response = encoded_response.decode(DEFAULT_ENCODING)
