@@ -9,24 +9,26 @@ from common.variables import *
 from common.utils import get_message, send_message
 
 # Временное решение для хранения пользователей, не в файле, а в словаре
-presences_users = set()
+presences_users = dict()
 
 
 def check_user_connection():
     pass
 
-def do_server_response(message):
+
+def do_server_response(message, address):
     """
     Обработчик сообщений от клиентов, принимает словарь -
     сообщение от клинта, проверяет корректность,
     возвращает словарь-ответ для клиента
 
+    :param address:
     :param message:
     :return:
     """
     if ACTION in message and message[ACTION] == PRESENCE and TIME in message and USER in message \
             and message[USER][ACCOUNT_NAME] not in presences_users:
-        presences_users.add(message[USER][ACCOUNT_NAME])
+        presences_users[message[USER][ACCOUNT_NAME]] = address
         return {RESPONSE: 200}
     elif message[USER][ACCOUNT_NAME] in presences_users:
         return {RESPONSE: 409, ERROR: 'User already connected'}
@@ -86,8 +88,8 @@ def main():
         if client_address[0] != "":
             try:
                 message_from_cient = get_message(client)
-                print(message_from_cient)
-                response = do_server_response(message_from_cient)
+                # transport.sendto()
+                response = do_server_response(message_from_cient, client_address[0])
                 send_message(client, response)
                 client.close()
             except (ValueError, json.JSONDecodeError):
