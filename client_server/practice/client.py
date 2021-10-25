@@ -2,7 +2,7 @@
 
 import sys
 import json
-import socket
+from socket import *
 import time
 from common.variables import *
 from common.utils import get_message, send_message
@@ -126,8 +126,8 @@ def read_server_response(message):
 def main():
     """Загружаем параметры командной строки"""
     try:
-        server_address = sys.argv[1]
-        server_port = int(sys.argv[2])
+        server_address = sys.argv[2]
+        server_port = int(sys.argv[1])
         if server_port < 1024 or server_port > 65535:
             raise ValueError
     except IndexError:
@@ -137,9 +137,6 @@ def main():
         print('В качестве порта может быть указано только число в диапазоне от 1024 до 65535.')
         sys.exit(1)
 
-    # Инициализация сокета и обмен
-    transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    transport.connect((server_address, server_port))
     commands = {'подключение',
                 'авторизация',
                 'отключение',
@@ -148,6 +145,12 @@ def main():
                 'отсоединиться'}
     user_input = input('Для выхода введите "quit"\nДля справки введите "help"\nКоманда:\n')
     while user_input.lower() != 'quit':
+        transport = socket(AF_INET, SOCK_STREAM)
+        transport.connect((server_address, server_port))
+        server_command = get_message(transport)
+        if server_command:
+            server_command = read_server_response(server_command)
+        print(server_command)
         if ((user_input.lower() not in commands) or (user_input.lower() == 'help')) and (user_input != ''):
             print(f'Доступные команды:')
             for item in commands:
@@ -158,7 +161,7 @@ def main():
         if user_input in commands:
             if user_input == 'подключение':
                 user_name = input('Имя пользователя:\n')
-                message_to_server = do_presence(user_name)
+                message_to_server = do_presence(user_name.lower())
                 send_message(transport, message_to_server)
             user_input = ''
             try:
@@ -166,7 +169,8 @@ def main():
                 print(answer)
             except (ValueError, json.JSONDecodeError):
                 print('Не удалось декодировать сообщение сервера.')
-
+            finally:
+                transport.close()
 
 if __name__ == '__main__':
     main()
