@@ -6,15 +6,15 @@ from socket import socket
 from common.variables import MAX_PACKAGE_LENGTH, DEFAULT_ENCODING
 
 
-def get_message(client):
+def get_message(_socket):
     """
     Утилита приёма и декодирования сообщения
     принимает байты выдаёт словарь, если приняточто-то другое отдаёт ошибку значения
-    :param client:
+    :param _socket:
     :return:
     """
     # client.settimeout(5.0)
-    encoded_response = client.recv(MAX_PACKAGE_LENGTH)
+    encoded_response = _socket.recv(MAX_PACKAGE_LENGTH)
     if isinstance(encoded_response, bytes):
         json_response = encoded_response.decode(DEFAULT_ENCODING)
         response = json.loads(json_response)
@@ -33,6 +33,7 @@ def send_message(_socket, message):
     :param message:
     :return:
     """
+    print(type(_socket))
     if isinstance(_socket, socket):
         js_message = json.dumps(message)
         encoded_message = js_message.encode(DEFAULT_ENCODING)

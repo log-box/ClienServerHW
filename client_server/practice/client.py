@@ -147,10 +147,6 @@ def main():
     while user_input.lower() != 'quit':
         transport = socket(AF_INET, SOCK_STREAM)
         transport.connect((server_address, server_port))
-        server_command = get_message(transport)
-        if server_command:
-            server_command = read_server_response(server_command)
-        print(server_command)
         if ((user_input.lower() not in commands) or (user_input.lower() == 'help')) and (user_input != ''):
             print(f'Доступные команды:')
             for item in commands:

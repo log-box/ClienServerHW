@@ -28,8 +28,9 @@ def do_server_response(message):
             and message[USER][ACCOUNT_NAME] not in presences_users:
         presences_users.add(message[USER][ACCOUNT_NAME])
         return {RESPONSE: 200}
-    elif message[USER][ACCOUNT_NAME] in presences_users:
-        return {RESPONSE: 409, ERROR: 'User already connected'}
+    if USER in message:
+        if message[USER][ACCOUNT_NAME] in presences_users:
+            return {RESPONSE: 409, ERROR: 'User already connected'}
     return {
         RESPONDEFAULT_IP_ADDRESSSE: 400,
         ERROR: 'Bad Request'
@@ -85,9 +86,9 @@ def main():
         client, client_address = transport.accept()
         if client_address[0] != "":
             try:
-                message_from_cient = get_message(client)
-                print(message_from_cient)
-                response = do_server_response(message_from_cient)
+                message_from_client = get_message(client)
+                print(message_from_client)
+                response = do_server_response(message_from_client)
                 send_message(client, response)
                 client.close()
             except (ValueError, json.JSONDecodeError):
