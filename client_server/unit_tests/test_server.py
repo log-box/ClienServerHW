@@ -6,9 +6,7 @@ import unittest
 import socket
 
 sys.path.append(os.path.join(os.getcwd(), '..'))
-from common.variables import *
 from server import do_server_response
-from common.utils import *
 from client import *
 
 
@@ -21,6 +19,7 @@ class TestServer(unittest.TestCase):
         ERROR: 'Bad Request'
     }
     ok_dict = {RESPONSE: 200}
+    user_already_connected_dict = {RESPONSE: 409, ERROR: 'User already connected'}
 
     def test_ok_check(self):
         """Корректный запрос"""
@@ -54,27 +53,14 @@ class TestServer(unittest.TestCase):
 
     def test_user_already_connected(self):
         """Ошибка - пользователь уже присоединился"""
-        """Переменные сервера"""
-        listen_address = ''
-        listen_port = DEFAULT_PORT
-        server_socket = socket(AF_INET, SOCK_STREAM)
-        server_socket.bind((listen_address, listen_port))
-        server_socket.listen(MAX_CONNECTIONS)
-        # client, client_address = server_socket.accept() https://stackoverflow.com/questions/5308080/python-socket-accept-nonblocking
-        presences_users = {'Guest: ""'}
-        """Переменные клиента"""
         server_address = DEFAULT_IP_ADDRESS
         server_port = DEFAULT_PORT
         client_socket = socket(AF_INET, SOCK_STREAM)
         client_socket.connect((server_address, server_port))
-        message_to_server = do_presence()
+        message_to_server = do_presence('Guest')
         send_message(client_socket, message_to_server)
-        # if client_address[0] != "":
-        message_from_client = get_message(client)
-        response = do_server_response(message_from_client)
-        send_message(client, response)
-        self.assertEqual(read_server_response(get_message(client_socket)), self.ok_dict)
-        client.close()
+        message_from_server = get_message(client_socket)
+        self.assertEqual(read_server_response(message_from_server), self.user_already_connected_dict)
         client_socket.close()
 
 

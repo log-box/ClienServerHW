@@ -9,11 +9,12 @@ from common.variables import *
 from common.utils import get_message, send_message
 
 # Временное решение для хранения пользователей, не в файле, а в словаре
-presences_users = set()
+presences_users = {"Guest": ''}
 
 
 def check_user_connection():
     pass
+
 
 def do_server_response(message):
     """
@@ -26,7 +27,7 @@ def do_server_response(message):
     """
     if ACTION in message and message[ACTION] == PRESENCE and TIME in message and USER in message \
             and message[USER][ACCOUNT_NAME] not in presences_users:
-        presences_users.add(message[USER][ACCOUNT_NAME])
+        presences_users[message[USER]] = [ACCOUNT_NAME]
         return {RESPONSE: 200}
     if USER in message:
         if message[USER][ACCOUNT_NAME] in presences_users:

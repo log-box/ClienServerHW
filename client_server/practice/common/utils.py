@@ -33,7 +33,6 @@ def send_message(_socket, message):
     :param message:
     :return:
     """
-    print(type(_socket))
     if isinstance(_socket, socket):
         js_message = json.dumps(message)
         encoded_message = js_message.encode(DEFAULT_ENCODING)
