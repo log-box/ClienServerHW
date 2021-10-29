@@ -119,7 +119,7 @@ def read_server_response(message):
         if message[RESPONSE] == 200:
             return {RESPONSE: 200}
         elif message[RESPONSE] == 409:
-            return {409: f'{message[ERROR]}'}
+            return {409: 'User already connected'}
         return {RESPONSE: 400, ERROR: 'Bad Request'}
     raise ValueError
 
