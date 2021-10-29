@@ -1,9 +1,9 @@
 """Unit-тесты сервера"""
 
-import sys
 import os
-import unittest
 import socket
+import sys
+import unittest
 
 sys.path.append(os.path.join(os.getcwd(), '..'))
 from server import do_server_response
@@ -14,17 +14,14 @@ class TestServer(unittest.TestCase):
     """
     В сервере только 1 функция для тестирования
     """
-    err_dict = {
-        RESPONSE: 400,
-        ERROR: 'Bad Request'
-    }
+    err_dict = {RESPONSE: 400}
     ok_dict = {RESPONSE: 200}
-    user_already_connected_dict = {RESPONSE: 409, ERROR: 'User already connected'}
+    user_already_connected_dict = {409: 'User already connected'}
 
     def test_ok_check(self):
         """Корректный запрос"""
         self.assertEqual(do_server_response(
-            {ACTION: PRESENCE, TIME: 1.1, USER: {ACCOUNT_NAME: 'Guest'}}), self.ok_dict)
+            {ACTION: PRESENCE, TIME: 1.1, USER: {ACCOUNT_NAME: 'Guest', STATUS: 'I`m online'}}), self.ok_dict)
 
     def test_no_action(self):
         """Ошибка если нет действия"""
@@ -46,10 +43,10 @@ class TestServer(unittest.TestCase):
         self.assertEqual(do_server_response(
             {ACTION: PRESENCE, TIME: '1.1'}), self.err_dict)
 
-    def test_unknown_user(self):
-        """Ошибка - не Guest"""
-        self.assertEqual(do_server_response(
-            {ACTION: PRESENCE, TIME: 1.1, USER: {ACCOUNT_NAME: 'Guest1'}}), self.err_dict)
+    # def test_unknown_user(self):
+    #     """Ошибка - не Guest"""
+    #     self.assertEqual(do_server_response(
+    #         {ACTION: PRESENCE, TIME: 1.1, USER: {ACCOUNT_NAME: 'Guest1'}}), self.err_dict)
 
     def test_user_already_connected(self):
         """Ошибка - пользователь уже присоединился"""
@@ -60,9 +57,9 @@ class TestServer(unittest.TestCase):
         message_to_server = do_presence('Guest')
         send_message(client_socket, message_to_server)
         message_from_server = get_message(client_socket)
-        self.assertEqual(read_server_response(message_from_server), self.user_already_connected_dict)
+        message_from_server = read_server_response(message_from_server)
+        self.assertEqual(message_from_server, self.user_already_connected_dict)
         client_socket.close()
-
 
 
 if __name__ == '__main__':

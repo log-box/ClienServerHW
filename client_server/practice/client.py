@@ -1,11 +1,12 @@
 """Программа-клиент"""
 
-import sys
 import json
-from socket import *
+import sys
 import time
-from common.variables import *
+from socket import *
+
 from common.utils import get_message, send_message
+from common.variables import *
 
 
 def do_authenticate(account_name, password):
@@ -116,10 +117,10 @@ def read_server_response(message):
     """
     if RESPONSE in message:
         if message[RESPONSE] == 200:
-            return '200 : OK'
+            return {RESPONSE: 200}
         elif message[RESPONSE] == 409:
-            return f'409 : {message[ERROR]}'
-        return f'400 : {message[ERROR]}'
+            return {409: f'{message[ERROR]}'}
+        return {RESPONSE: 400, ERROR: 'Bad Request'}
     raise ValueError
 
 
@@ -154,8 +155,8 @@ def main():
             user_input = ''
         if user_input == '':
             user_input = input('Команда:\n')
-        if user_input in commands:
-            if user_input == 'подключение':
+        if user_input.lower() in commands:
+            if user_input.lower() == 'подключение':
                 user_name = input('Имя пользователя:\n')
                 message_to_server = do_presence(user_name.lower())
                 send_message(transport, message_to_server)
@@ -167,6 +168,8 @@ def main():
                 print('Не удалось декодировать сообщение сервера.')
             finally:
                 transport.close()
+        else:
+            user_input = ''
 
 if __name__ == '__main__':
     main()

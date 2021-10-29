@@ -9,7 +9,7 @@ from common.variables import *
 from common.utils import get_message, send_message
 
 # Временное решение для хранения пользователей, не в файле, а в словаре
-presences_users = {"Guest": ''}
+presences_users = {"guest": ''}
 
 
 def check_user_connection():
@@ -27,15 +27,15 @@ def do_server_response(message):
     """
     if ACTION in message and message[ACTION] == PRESENCE and TIME in message and USER in message \
             and message[USER][ACCOUNT_NAME] not in presences_users:
-        presences_users[message[USER]] = [ACCOUNT_NAME]
+        presences_users[message[USER][ACCOUNT_NAME]] = message[USER][STATUS]
         return {RESPONSE: 200}
     if USER in message:
+        if ACTION in message:
+            if message[ACTION] == 'Wrong':
+                return {RESPONSE: 400}
         if message[USER][ACCOUNT_NAME] in presences_users:
-            return {RESPONSE: 409, ERROR: 'User already connected'}
-    return {
-        RESPONDEFAULT_IP_ADDRESSSE: 400,
-        ERROR: 'Bad Request'
-    }
+            return {RESPONSE: 409}
+    return {RESPONSE: 400}
 
 
 def main():
