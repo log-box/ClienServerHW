@@ -55,12 +55,9 @@ def main():
             raise ValueError
     except IndexError:
         SERVER_LOG.error('После параметра -\'p\' необходимо указать номер порта.')
-        # print('После параметра -\'p\' необходимо указать номер порта.')
         sys.exit(1)
     except ValueError:
         SERVER_LOG.error('В качастве порта может быть указано только число в диапазоне от 1024 до 65535.')
-        # print(
-        #     'В качастве порта может быть указано только число в диапазоне от 1024 до 65535.')
         sys.exit(1)
 
     # Затем загружаем какой адрес слушать
@@ -73,8 +70,6 @@ def main():
 
     except IndexError:
         SERVER_LOG.error('После параметра \'a\'- необходимо указать адрес, который будет слушать сервер.')
-        # print(
-        #     'После параметра \'a\'- необходимо указать адрес, который будет слушать сервер.')
         sys.exit(1)
 
     # Готовим сокет
@@ -91,13 +86,12 @@ def main():
         if client_address[0] != "":
             try:
                 message_from_client = get_message(client)
-                print(message_from_client)
+                SERVER_LOG.info(message_from_client)
                 response = do_server_response(message_from_client)
                 send_message(client, response)
                 client.close()
             except (ValueError, json.JSONDecodeError):
-                SERVER_LOG.error('Принято некорретное сообщение от клиента.')
-                # print('Принято некорретное сообщение от клиента.')
+                SERVER_LOG.error(f'Принято некорретное сообщение от клиента: {message_from_client}')
                 client.close()
 
 

@@ -7,7 +7,7 @@ from socket import *
 
 from common.utils import get_message, send_message
 from common.variables import *
-
+from log.client_log_config import *
 
 def do_authenticate(account_name, password):
     """
@@ -135,7 +135,8 @@ def main():
         server_address = DEFAULT_IP_ADDRESS
         server_port = DEFAULT_PORT
     except ValueError:
-        print('В качестве порта может быть указано только число в диапазоне от 1024 до 65535.')
+        CLIENT_LOG.error('В качестве порта может быть указано только число в диапазоне от 1024 до 65535.')
+        # print('В качестве порта может быть указано только число в диапазоне от 1024 до 65535.')
         sys.exit(1)
 
     commands = {'подключение',
@@ -163,13 +164,16 @@ def main():
             user_input = ''
             try:
                 answer = read_server_response(get_message(transport))
-                print(answer)
+                CLIENT_LOG.info(answer)
+                # print(answer)
             except (ValueError, json.JSONDecodeError):
-                print('Не удалось декодировать сообщение сервера.')
+                CLIENT_LOG.error('Не удалось декодировать сообщение сервера.')
+                # print('Не удалось декодировать сообщение сервера.')
             finally:
                 transport.close()
         else:
-            user_input = ''
+            if user_input.lower() != 'quit':
+                user_input = ''
 
 if __name__ == '__main__':
     main()
