@@ -1,16 +1,17 @@
 import logging
-import re
 from pathlib import Path
+from datetime import date
 
-LOG = logging.getLogger('client.app')
-FILES_COUNT = len(sorted(Path('').glob('client*.log')))
-
-
-FILE_HANDLER = logging.FileHandler(f'client{FILES_COUNT}.log', encoding='utf8')
+CLIENT_LOG = logging.getLogger('client.app')
+FORMATTER = logging.Formatter("%(asctime)-25s %(levelname)s - %(module)s | %(message)s")
+TODAY = str(date.today())
+# FILES_COUNT = len(sorted(Path('.').glob(f'{TODAY}-server-*.log')))
+FILE_HANDLER = logging.FileHandler(f'{TODAY}-client.log', encoding='utf8')
 FILE_HANDLER.setLevel(logging.DEBUG)
-FORMATTER = logging.Formatter("%(asctime)-25s %(levelname)s %(module)s | %(message)s")
 FILE_HANDLER.setFormatter(FORMATTER)
-LOG.addHandler(FILE_HANDLER)
-LOG.setLevel(logging.DEBUG)
+CLIENT_LOG.addHandler(FILE_HANDLER)
+CLIENT_LOG.setLevel(logging.DEBUG)
 
-LOG.info('TestMessage')
+STREAM_HANDLER = logging.StreamHandler()
+STREAM_HANDLER.setFormatter(FORMATTER)
+CLIENT_LOG.addHandler(STREAM_HANDLER)
