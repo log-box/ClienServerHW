@@ -3,11 +3,10 @@
 import socket
 import sys
 import json
-import time
 
 from common.variables import *
 from common.utils import get_message, send_message
-
+from log.server_log_config import *
 # Временное решение для хранения пользователей, не в файле, а в словаре
 presences_users = {"guest": ''}
 
@@ -49,16 +48,19 @@ def main():
     try:
         if '-p' in sys.argv:
             listen_port = int(sys.argv[sys.argv.index('-p') + 1])
+            # DEFAULT_PORT = listen_port
         else:
             listen_port = DEFAULT_PORT
         if listen_port < 1024 or listen_port > 65535:
             raise ValueError
     except IndexError:
-        print('После параметра -\'p\' необходимо указать номер порта.')
+        SERVER_LOG.error('После параметра -\'p\' необходимо указать номер порта.')
+        # print('После параметра -\'p\' необходимо указать номер порта.')
         sys.exit(1)
     except ValueError:
-        print(
-            'В качастве порта может быть указано только число в диапазоне от 1024 до 65535.')
+        SERVER_LOG.error('В качастве порта может быть указано только число в диапазоне от 1024 до 65535.')
+        # print(
+        #     'В качастве порта может быть указано только число в диапазоне от 1024 до 65535.')
         sys.exit(1)
 
     # Затем загружаем какой адрес слушать
@@ -70,15 +72,16 @@ def main():
             listen_address = ''
 
     except IndexError:
-        print(
-            'После параметра \'a\'- необходимо указать адрес, который будет слушать сервер.')
+        SERVER_LOG.error('После параметра \'a\'- необходимо указать адрес, который будет слушать сервер.')
+        # print(
+        #     'После параметра \'a\'- необходимо указать адрес, который будет слушать сервер.')
         sys.exit(1)
 
     # Готовим сокет
 
     transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     transport.bind((listen_address, listen_port))
-
+    SERVER_LOG.info(f'Server started on port {listen_port}')
     # Слушаем порт
 
     transport.listen(MAX_CONNECTIONS)
@@ -93,7 +96,8 @@ def main():
                 send_message(client, response)
                 client.close()
             except (ValueError, json.JSONDecodeError):
-                print('Принято некорретное сообщение от клиента.')
+                SERVER_LOG.error('Принято некорретное сообщение от клиента.')
+                # print('Принято некорретное сообщение от клиента.')
                 client.close()
 
 
