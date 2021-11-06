@@ -4,8 +4,10 @@ import json
 from socket import socket
 
 from common.variables import MAX_PACKAGE_LENGTH, DEFAULT_ENCODING
+from log.log import Log
 
 
+@Log()
 def get_message(_socket):
     """
     Утилита приёма и декодирования сообщения
@@ -25,6 +27,7 @@ def get_message(_socket):
         raise ValueError
 
 
+@Log()
 def send_message(_socket, message):
     """
     Утилита кодирования и отправки сообщения
