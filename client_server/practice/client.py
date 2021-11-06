@@ -8,7 +8,10 @@ from socket import *
 from common.utils import get_message, send_message
 from common.variables import *
 from log.client_log_config import *
+from log.log import Log
 
+
+@Log()
 def do_authenticate(account_name, password):
     """
     Функция генерирует запрос об авторизации клиента (авторизация)
@@ -27,6 +30,7 @@ def do_authenticate(account_name, password):
     return out
 
 
+@Log()
 def do_quit(account_name):
     """
     Функция отправляет запрос о выходе клиента (отключение)
@@ -43,6 +47,7 @@ def do_quit(account_name):
     return out
 
 
+@Log()
 def do_presence(account_name='Guest', status='I`m online'):
     """
     Функция генерирует запрос о присутствии клиента (подключение)
@@ -63,6 +68,7 @@ def do_presence(account_name='Guest', status='I`m online'):
     return out
 
 
+@Log()
 def do_message_to_user(to_user, message):
     """
     Функция генерирует сообщение пользователю или чату (Пользователь-Пользователь, Пользователь-Чат)
@@ -81,6 +87,7 @@ def do_message_to_user(to_user, message):
     return out
 
 
+@Log()
 def do_join_chat(room_name):
     """
     Функция Присоединяет пользователя к чату (Присоединиться к чату)
@@ -95,6 +102,7 @@ def do_join_chat(room_name):
     return out
 
 
+@Log()
 def do_leave_chat(room_name):
     """
     Функция отсоединяет пользователя от чата (Покинуть чат)
@@ -109,6 +117,7 @@ def do_leave_chat(room_name):
     return out
 
 
+@Log()
 def read_server_response(message):
     """
     Функция разбирает ответ сервера
@@ -174,6 +183,7 @@ def main():
         else:
             if user_input.lower() != 'quit':
                 user_input = ''
+
 
 if __name__ == '__main__':
     main()
