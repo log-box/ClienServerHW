@@ -8,12 +8,14 @@ from common.variables import *
 from common.utils import get_message, send_message
 from log.log import Log
 from log.server_log_config import *
+
 # Временное решение для хранения пользователей, не в файле, а в словаре
 presences_users = {"guest": ''}
 
 
 def check_user_connection():
     pass
+
 
 @Log()
 def do_server_response(message):
