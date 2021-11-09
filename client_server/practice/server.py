@@ -147,9 +147,13 @@ def main():
             if all_clients:
                 if messages:
                     for sock in all_clients:
-                        for value in messages.values():
-                            encoded_message = value.encode(DEFAULT_ENCODING)
-                            sock.send(encoded_message)
+                        try:
+                            for key, value in messages.items():
+                                encoded_message = value.encode(DEFAULT_ENCODING)
+                                sock.send(encoded_message)
+                        except BrokenPipeError:
+                            pass
+
             if requests:
                 do_server_responses(requests, clients_write, all_clients, messages)
             # if messages:
