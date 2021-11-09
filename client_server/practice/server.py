@@ -1,11 +1,9 @@
 """Программа-сервер"""
-
-import socket
-import sys
 import json
+import select
+import socket
 
 from common.variables import *
-from common.utils import get_message, send_message
 from log.log import Log
 from log.server_log_config import *
 
@@ -13,12 +11,34 @@ from log.server_log_config import *
 presences_users = {"guest": ''}
 
 
-def check_user_connection():
-    pass
+def read_requests(read_clients, all_clients):
+    responses = dict()
+
+    for sock in read_clients:
+        try:
+            data = sock.recv(1024).decode('utf-8')
+            response = json.loads(data)
+            responses[sock] = response
+        except Exception as e:
+            print(e)
+            print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
+            sock.close()
+            all_clients.remove(sock)
+
+    return responses
+
+
+def get_listen_socket(address):
+    """Инициируем серверный сокет"""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(address)
+    sock.listen(MAX_CONNECTIONS)
+    sock.settimeout(1)
+    return sock
 
 
 @Log()
-def do_server_response(message):
+def prepare_server_response(message, all_clients):
     """
     Обработчик сообщений от клиентов, принимает словарь -
     сообщение от клинта, проверяет корректность,
@@ -38,6 +58,25 @@ def do_server_response(message):
         if message[USER][ACCOUNT_NAME] in presences_users:
             return {RESPONSE: 409}
     return {RESPONSE: 400}
+
+
+def do_server_responses(requests, clients_write, all_clients):
+    for sock in clients_write:
+        if sock in requests:
+            try:
+                if requests[sock] == '':
+                    raise Exception
+                resp = prepare_server_response(requests[sock], all_clients)
+                js_message = json.dumps(resp)
+                encoded_message = js_message.encode(DEFAULT_ENCODING)
+                sock.send(encoded_message)
+            except Exception as ex:
+                # sock.fileno() - вернуть дескриптор файла сокетов (небольшое целое число)
+                # sock.getpeername() - получить IP-адрес и номер порта клиента
+                print(ex)
+                print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
+                sock.close()
+                all_clients.remove(sock)
 
 
 def main():
@@ -75,27 +114,32 @@ def main():
         SERVER_LOG.error('После параметра \'a\'- необходимо указать адрес, который будет слушать сервер.')
         sys.exit(1)
 
-    # Готовим сокет
-
-    transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    transport.bind((listen_address, listen_port))
-    SERVER_LOG.info(f'Server started on port {listen_port}')
-    # Слушаем порт
-
-    transport.listen(MAX_CONNECTIONS)
-
+    all_clients = []
+    server_address = (listen_address, listen_port)
+    s = get_listen_socket(server_address)
     while True:
-        client, client_address = transport.accept()
-        if client_address[0] != "":
+        try:
+            client, client_address = s.accept()
+        except OSError:
+            pass
+        else:
+            print(f'Запрос от клиента с адресом {str(client_address)}')
+            all_clients.append(client)
+        finally:
+            clients_write = []
+            clients_read = []
+            errors = []
             try:
-                message_from_client = get_message(client)
-                SERVER_LOG.info(message_from_client)
-                response = do_server_response(message_from_client)
-                send_message(client, response)
-                client.close()
-            except (ValueError, json.JSONDecodeError):
-                SERVER_LOG.error(f'Принято некорретное сообщение от клиента: {message_from_client}')
-                client.close()
+                clients_read, clients_write, errors = select.select(all_clients, all_clients, errors, 0)
+            except Exception as e:
+                print(e)
+                pass
+            requests = dict()
+            if clients_read:
+                requests = read_requests(clients_read, all_clients)
+
+            if requests:
+                do_server_responses(requests, clients_write, all_clients)
 
 
 if __name__ == '__main__':
