@@ -21,7 +21,7 @@ def read_requests(read_clients, all_clients):
             responses[sock] = response
         except Exception as e:
             print(e)
-            print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
+            # print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
             sock.close()
             all_clients.remove(sock)
 
@@ -37,19 +37,25 @@ def get_listen_socket(address):
     return sock
 
 
-@Log()
-def prepare_server_response(message, all_clients):
+# @Log()
+def prepare_server_response(message, all_clients, messages):
     """
     Обработчик сообщений от клиентов, принимает словарь -
     сообщение от клинта, проверяет корректность,
     возвращает словарь-ответ для клиента
 
+    :param all_clients:
+    :param messages:
     :param message:
     :return:
     """
     if ACTION in message and message[ACTION] == PRESENCE and TIME in message and USER in message \
             and message[USER][ACCOUNT_NAME] not in presences_users:
         presences_users[message[USER][ACCOUNT_NAME]] = message[USER][STATUS]
+        return {RESPONSE: 200}
+    if ACTION in message and message[ACTION] == MSG:
+        client_socket = str(message[FROM])
+        messages[client_socket] = message[MESSAGE]
         return {RESPONSE: 200}
     if USER in message:
         if ACTION in message:
@@ -60,13 +66,13 @@ def prepare_server_response(message, all_clients):
     return {RESPONSE: 400}
 
 
-def do_server_responses(requests, clients_write, all_clients):
+def do_server_responses(requests, clients_write, all_clients, messages):
     for sock in clients_write:
         if sock in requests:
             try:
                 if requests[sock] == '':
                     raise Exception
-                resp = prepare_server_response(requests[sock], all_clients)
+                resp = prepare_server_response(requests[sock], all_clients, messages)
                 js_message = json.dumps(resp)
                 encoded_message = js_message.encode(DEFAULT_ENCODING)
                 sock.send(encoded_message)
@@ -115,6 +121,7 @@ def main():
         sys.exit(1)
 
     all_clients = []
+    messages = dict()
     server_address = (listen_address, listen_port)
     s = get_listen_socket(server_address)
     while True:
@@ -137,9 +144,17 @@ def main():
             requests = dict()
             if clients_read:
                 requests = read_requests(clients_read, all_clients)
-
+            if all_clients:
+                if messages:
+                    for sock in all_clients:
+                        for value in messages.values():
+                            encoded_message = value.encode(DEFAULT_ENCODING)
+                            sock.send(encoded_message)
             if requests:
-                do_server_responses(requests, clients_write, all_clients)
+                do_server_responses(requests, clients_write, all_clients, messages)
+            # if messages:
+            #     for key, value in messages.items():
+            #         print(key, value)
 
 
 if __name__ == '__main__':

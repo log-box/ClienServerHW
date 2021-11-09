@@ -7,7 +7,7 @@ from common.variables import MAX_PACKAGE_LENGTH, DEFAULT_ENCODING
 from log.log import Log
 
 
-@Log()
+# @Log()
 def get_message(_socket):
     """
     Утилита приёма и декодирования сообщения

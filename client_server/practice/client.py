@@ -8,7 +8,7 @@ from socket import *
 from common.utils import get_message, send_message
 from common.variables import *
 from log.client_log_config import *
-from practice.common.do_dict_utils import do_presence
+from practice.common.do_dict_utils import do_presence, do_message
 
 
 @contextmanager
@@ -19,6 +19,25 @@ def socket_context(server_address, server_port, *args, **kw):
         yield s
     finally:
         s.close()
+
+
+def user_message(sock):
+    msg = ''
+    while msg.strip() == '':
+        msg = input('Ваше сообщение: ')
+    msg = do_message(msg, sock)
+    send_message(sock, msg)
+    answer = ''
+    try:
+        resp = get_message(sock)
+        answer = read_server_response(resp)
+        # CLIENT_LOG.info(answer)
+    except (ValueError, json.JSONDecodeError):
+        CLIENT_LOG.error('Не удалось декодировать сообщение сервера.')
+    if answer != '':
+        return answer
+    else:
+        return CLIENT_LOG.error('Не удалось декодировать сообщение сервера.')
 
 
 def user_connect(sock):
@@ -35,9 +54,6 @@ def user_connect(sock):
         return answer
     else:
         return CLIENT_LOG.error('Не удалось декодировать сообщение сервера.')
-
-
-
 
 
 # @Log()
@@ -102,19 +118,9 @@ def main():
                     data = s.recv(1024).decode('utf-8')
                     print(data)
             if user_input.lower() == 'отправить':
-                msg = ''
-                while msg.strip() == '':
-                    msg = input('Ваше сообщение: ')
-                s.send(msg.encode('utf-8'))
-                answer = read_server_response(get_message(s))
-                print(answer)
+                user_message(s)
             user_input = ''
-            # continue
-            # s.close()
-        # else:
-        #     if user_input.lower() != 'quit':
-        #         user_input = ''
-
+        s.close()
 
 if __name__ == '__main__':
     main()

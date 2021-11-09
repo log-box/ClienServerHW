@@ -60,16 +60,18 @@ def do_presence(account_name='Guest', status='I`m online'):
 
 
 # @Log()
-def do_message(message):
+def do_message(message, client):
     """
     Функция генерирует сообщение пользователю или чату (Пользователь-Пользователь, Пользователь-Чат)
+    :param client:
     :param message:
     :return:
     """
+
     out = {
         ACTION: MSG,
         TIME: time.time(),
-        FROM: ACCOUNT_NAME,  # Доделать через сохранение имени пользователя в файл(пока просто 'account_name')
+        FROM: str(client),  # Доделать через сохранение имени пользователя в файл(пока просто 'account_name')
         ENCODING: DEFAULT_ENCODING,
         MESSAGE: message
     }
