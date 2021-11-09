@@ -96,8 +96,8 @@ def main():
                 'отправить',
                 'принять', }
     user_input = input('Для выхода введите "quit"\nДля справки введите "help"\nКоманда:\n')
-    s = socket(AF_INET, SOCK_STREAM)
-    s.connect((server_address, server_port))
+    # s = socket(AF_INET, SOCK_STREAM)
+    # s.connect((server_address, server_port))
     while user_input.lower() != 'quit':
 
         # with socket_context(server_address, server_port, AF_INET, SOCK_STREAM) as s:
@@ -110,17 +110,20 @@ def main():
             user_input = input('Команда:\n')
         if user_input.lower() in commands:
             if user_input.lower() == 'подключение':
-                print(user_connect(s))
+                with socket_context(server_address, server_port, AF_INET, SOCK_STREAM) as s:
+                    print(user_connect(s))
             if user_input.lower() == 'принять':
-                s.close()
+                # s.close()
                 print('Клиент переведен в режим приема сообщений')
                 with socket_context(server_address, server_port, AF_INET, SOCK_STREAM) as s:
                     data = s.recv(1024).decode('utf-8')
                     print(data)
             if user_input.lower() == 'отправить':
-                user_message(s)
+                with socket_context(server_address, server_port, AF_INET, SOCK_STREAM) as s:
+                    user_message(s)
             user_input = ''
         s.close()
+
 
 if __name__ == '__main__':
     main()

@@ -80,7 +80,7 @@ def do_server_responses(requests, clients_write, all_clients, messages):
                 # sock.fileno() - вернуть дескриптор файла сокетов (небольшое целое число)
                 # sock.getpeername() - получить IP-адрес и номер порта клиента
                 print(ex)
-                print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
+                # print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
                 sock.close()
                 all_clients.remove(sock)
 
