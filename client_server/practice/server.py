@@ -146,11 +146,22 @@ def main():
                 requests = read_requests(clients_read, all_clients)
             if all_clients:
                 if messages:
+                    key_to_delete = []
                     for sock in all_clients:
                         try:
                             for key, value in messages.items():
                                 encoded_message = value.encode(DEFAULT_ENCODING)
                                 sock.send(encoded_message)
+                                key_to_delete.append(key)
+                            for key in key_to_delete:
+                                if key != 'empty':
+                                    del messages[key]
+                        except BrokenPipeError:
+                            pass
+                else:
+                    for sock in all_clients:
+                        try:
+                            sock.send(b'chat is empty')
                         except BrokenPipeError:
                             pass
 

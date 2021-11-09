@@ -122,7 +122,7 @@ def main():
                 with socket_context(server_address, server_port, AF_INET, SOCK_STREAM) as s:
                     user_message(s)
             user_input = ''
-        s.close()
+        # s.close()
 
 
 if __name__ == '__main__':
