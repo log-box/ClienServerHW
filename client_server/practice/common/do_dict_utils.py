@@ -53,8 +53,16 @@ def do_presence(account_name='Guest', status='I`m online'):
         TYPE: STATUS,
         USER: {
             ACCOUNT_NAME: account_name,
-            STATUS: status
+            STATUS: status,
         }
+    }
+    return out
+
+
+def do_wait_message():
+    out = {
+        ACTION: MSG,
+        MESSAGE: '...',
     }
     return out
 
@@ -73,7 +81,7 @@ def do_message(message, client):
         TIME: time.time(),
         FROM: str(client),  # Доделать через сохранение имени пользователя в файл(пока просто 'account_name')
         ENCODING: DEFAULT_ENCODING,
-        MESSAGE: message
+        MESSAGE: message,
     }
     return out
 

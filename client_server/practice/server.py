@@ -4,28 +4,10 @@ import select
 import socket
 
 from common.variables import *
-from log.log import Log
 from log.server_log_config import *
 
 # Временное решение для хранения пользователей, не в файле, а в словаре
 presences_users = {"guest": ''}
-
-
-def read_requests(read_clients, all_clients):
-    responses = dict()
-
-    for sock in read_clients:
-        try:
-            data = sock.recv(1024).decode('utf-8')
-            response = json.loads(data)
-            responses[sock] = response
-        except Exception as e:
-            print(e)
-            # print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
-            sock.close()
-            all_clients.remove(sock)
-
-    return responses
 
 
 def get_listen_socket(address):
@@ -37,13 +19,11 @@ def get_listen_socket(address):
     return sock
 
 
-# @Log()
-def prepare_server_response(message, all_clients, messages):
+def prepare_server_response(message):
     """
     Обработчик сообщений от клиентов, принимает словарь -
     сообщение от клинта, проверяет корректность,
     возвращает словарь-ответ для клиента
-
     :param all_clients:
     :param messages:
     :param message:
@@ -54,9 +34,9 @@ def prepare_server_response(message, all_clients, messages):
         presences_users[message[USER][ACCOUNT_NAME]] = message[USER][STATUS]
         return {RESPONSE: 200}
     if ACTION in message and message[ACTION] == MSG:
-        client_socket = str(message[FROM])
-        messages[client_socket] = message[MESSAGE]
-        return {RESPONSE: 200}
+        # client_socket = str(message[FROM])
+        # messages[client_socket] = message[MESSAGE]
+        return {RESPONSE: 200, MESSAGE: message[MESSAGE]}
     if USER in message:
         if ACTION in message:
             if message[ACTION] == 'Wrong':
@@ -66,33 +46,48 @@ def prepare_server_response(message, all_clients, messages):
     return {RESPONSE: 400}
 
 
-def do_server_responses(requests, clients_write, all_clients, messages):
+def read_requests(read_clients, all_clients):
+    responses = dict()
+    for sock in read_clients:
+        try:
+            data = sock.recv(1024).decode('utf-8')
+            response = json.loads(data)
+            responses[sock] = response
+        except Exception as e:
+            print(e)
+            print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
+            sock.close()
+            all_clients.remove(sock)
+    return responses
+
+
+def do_server_responses(requests, clients_write, all_clients):
     for sock in clients_write:
-        if sock in requests:
-            try:
-                if requests[sock] == '':
+        try:
+            for sock_requests in requests:
+                if requests[sock_requests] == '':
                     raise Exception
-                resp = prepare_server_response(requests[sock], all_clients, messages)
+                resp = prepare_server_response(requests[sock_requests])
+                # resp = prepare_server_response(sock, all_clients, messages)
                 js_message = json.dumps(resp)
                 encoded_message = js_message.encode(DEFAULT_ENCODING)
                 sock.send(encoded_message)
-            except Exception as ex:
-                # sock.fileno() - вернуть дескриптор файла сокетов (небольшое целое число)
-                # sock.getpeername() - получить IP-адрес и номер порта клиента
-                print(ex)
-                # print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
-                sock.close()
-                all_clients.remove(sock)
+        except Exception as ex:
+            # sock.fileno() - вернуть дескриптор файла сокетов (небольшое целое число)
+            # sock.getpeername() - получить IP-адрес и номер порта клиента
+            print(ex)
+            print(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
+            sock.close()
+            all_clients.remove(sock)
 
 
-def main():
+def init_params():
     """
     Загрузка параметров командной строки, если нет параметров, то задаём значения по умоланию.
     Сначала обрабатываем порт:
     server.py -p 8888 -a 127.0.0.1
     :return:
     """
-
     try:
         if '-p' in sys.argv:
             listen_port = int(sys.argv[sys.argv.index('-p') + 1])
@@ -119,10 +114,12 @@ def main():
     except IndexError:
         SERVER_LOG.error('После параметра \'a\'- необходимо указать адрес, который будет слушать сервер.')
         sys.exit(1)
+    return listen_address, listen_port
 
+
+def main():
     all_clients = []
-    messages = dict()
-    server_address = (listen_address, listen_port)
+    server_address = (init_params())
     s = get_listen_socket(server_address)
     while True:
         try:
@@ -139,37 +136,19 @@ def main():
             try:
                 clients_read, clients_write, errors = select.select(all_clients, all_clients, errors, 0)
             except Exception as e:
-                print(e)
+                # print(e)
+                print(f'{"*"*10}')
                 pass
             requests = dict()
             if clients_read:
                 requests = read_requests(clients_read, all_clients)
-            if all_clients:
-                if messages:
-                    key_to_delete = []
-                    for sock in all_clients:
-                        try:
-                            for key, value in messages.items():
-                                encoded_message = value.encode(DEFAULT_ENCODING)
-                                sock.send(encoded_message)
-                                key_to_delete.append(key)
-                            for key in key_to_delete:
-                                if key != 'empty':
-                                    del messages[key]
-                        except BrokenPipeError:
-                            pass
-                else:
-                    for sock in all_clients:
-                        try:
-                            sock.send(b'chat is empty')
-                        except BrokenPipeError:
-                            pass
-
+                # print(requests)
             if requests:
-                do_server_responses(requests, clients_write, all_clients, messages)
-            # if messages:
-            #     for key, value in messages.items():
-            #         print(key, value)
+                do_server_responses(requests, clients_write, all_clients)
+            print(f'read: {clients_read}')
+            print(f'write: {clients_write}')
+            print(f'error: {errors}')
+            print(f'requests: {requests}')
 
 
 if __name__ == '__main__':

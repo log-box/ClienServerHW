@@ -1,14 +1,13 @@
 """Программа-клиент"""
 import json
 import sys
-import time
 from contextlib import contextmanager
 from socket import *
 
 from common.utils import get_message, send_message
 from common.variables import *
 from log.client_log_config import *
-from practice.common.do_dict_utils import do_presence, do_message
+from practice.common.do_dict_utils import do_presence, do_message, do_wait_message
 
 
 @contextmanager
@@ -31,9 +30,9 @@ def user_message(sock):
     try:
         resp = get_message(sock)
         answer = read_server_response(resp)
-        # CLIENT_LOG.info(answer)
-    except (ValueError, json.JSONDecodeError):
+    except Exception as err:  # (ValueError, json.JSONDecodeError)
         CLIENT_LOG.error('Не удалось декодировать сообщение сервера.')
+        print(err)
     if answer != '':
         return answer
     else:
@@ -42,7 +41,7 @@ def user_message(sock):
 
 def user_connect(sock):
     user_name = input('Имя пользователя:\n')
-    message_to_server = do_presence(user_name.lower())
+    message_to_server = do_presence(sock, user_name.lower())
     send_message(sock, message_to_server)
     answer = ''
     try:
@@ -56,6 +55,18 @@ def user_connect(sock):
         return CLIENT_LOG.error('Не удалось декодировать сообщение сервера.')
 
 
+def user_wait_message(sock):
+    message_to_server = do_wait_message(sock)
+    send_message(sock, message_to_server)
+    try:
+        sock.settimeout(10)
+        data = sock.recv(1024).decode('utf-8')
+
+        return data
+    except Exception:
+        return 'Server not answered'
+
+
 # @Log()
 def read_server_response(message):
     """
@@ -64,6 +75,8 @@ def read_server_response(message):
     :return:
     """
     if RESPONSE in message:
+        if message[RESPONSE] == 200 and MESSAGE in message:
+            return {200: message[MESSAGE]}
         if message[RESPONSE] == 200:
             return {RESPONSE: 200}
         elif message[RESPONSE] == 409:
@@ -87,14 +100,14 @@ def main():
         # print('В качестве порта может быть указано только число в диапазоне от 1024 до 65535.')
         sys.exit(1)
 
-    commands = {'подключение',
-                'авторизация',
-                'отключение',
-                'сообщение',
-                'присоединиться',
-                'отсоединиться',
-                'отправить',
-                'принять', }
+    commands = {'connect',
+                # 'авторизация',
+                # 'отключение',
+                # 'сообщение',
+                # 'присоединиться',
+                # 'отсоединиться',
+                'message',
+                'get', }
     user_input = input('Для выхода введите "quit"\nДля справки введите "help"\nКоманда:\n')
     # s = socket(AF_INET, SOCK_STREAM)
     # s.connect((server_address, server_port))
@@ -109,20 +122,25 @@ def main():
         elif user_input == '':
             user_input = input('Команда:\n')
         if user_input.lower() in commands:
-            if user_input.lower() == 'подключение':
+            if user_input.lower() == 'connect':
                 with socket_context(server_address, server_port, AF_INET, SOCK_STREAM) as s:
                     print(user_connect(s))
-            if user_input.lower() == 'принять':
-                # s.close()
-                print('Клиент переведен в режим приема сообщений')
+            if user_input.lower() == 'get':
                 with socket_context(server_address, server_port, AF_INET, SOCK_STREAM) as s:
-                    data = s.recv(1024).decode('utf-8')
-                    print(data)
-            if user_input.lower() == 'отправить':
+                    try:
+                        server_response = user_wait_message(s)
+                        print(server_response)
+                        print('Клиент переведен в режим приема сообщений')
+                        while True:
+                            s.settimeout(None)
+                            data = s.recv(1024).decode('utf-8')
+                            print(data)
+                    except Exception as err:
+                        print(err)
+            if user_input.lower() == 'message':
                 with socket_context(server_address, server_port, AF_INET, SOCK_STREAM) as s:
                     user_message(s)
             user_input = ''
-        # s.close()
 
 
 if __name__ == '__main__':
