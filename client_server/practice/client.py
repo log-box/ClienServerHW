@@ -41,7 +41,7 @@ def user_message(sock):
 
 def user_connect(sock):
     user_name = input('Имя пользователя:\n')
-    message_to_server = do_presence(sock, user_name.lower())
+    message_to_server = do_presence(user_name.lower())
     send_message(sock, message_to_server)
     answer = ''
     try:
@@ -56,7 +56,7 @@ def user_connect(sock):
 
 
 def user_wait_message(sock):
-    message_to_server = do_wait_message(sock)
+    message_to_server = do_wait_message()
     send_message(sock, message_to_server)
     try:
         sock.settimeout(10)
@@ -97,23 +97,13 @@ def main():
         server_port = DEFAULT_PORT
     except ValueError:
         CLIENT_LOG.error('В качестве порта может быть указано только число в диапазоне от 1024 до 65535.')
-        # print('В качестве порта может быть указано только число в диапазоне от 1024 до 65535.')
         sys.exit(1)
 
     commands = {'connect',
-                # 'авторизация',
-                # 'отключение',
-                # 'сообщение',
-                # 'присоединиться',
-                # 'отсоединиться',
                 'message',
                 'get', }
     user_input = input('Для выхода введите "quit"\nДля справки введите "help"\nКоманда:\n')
-    # s = socket(AF_INET, SOCK_STREAM)
-    # s.connect((server_address, server_port))
     while user_input.lower() != 'quit':
-
-        # with socket_context(server_address, server_port, AF_INET, SOCK_STREAM) as s:
         if ((user_input.lower() not in commands) or (user_input.lower() == 'help')) and (user_input != ''):
             print(f'Доступные команды:')
             for item in commands:
